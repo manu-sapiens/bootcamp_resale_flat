@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  hdb-api:
+    image: manusapiens/hdb-resale-api:latest  # Replace with your Docker Hub username
+    container_name: hdb-resale-api
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    environment:
+      - NODE_ENV=production
+    networks:
+      - hdb-network
+
+networks:
+  hdb-network:
+    driver: bridge

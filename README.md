@@ -42,6 +42,65 @@ node server.js
 
 4. Open your browser and visit: `http://localhost:3000`
 
+## Docker Support
+
+### Building the Docker Image
+
+```bash
+# Build the image
+docker build -t hdb-resale-api .
+
+# Run the container
+docker run -p 3000:3000 hdb-resale-api
+```
+
+### Using Docker Hub
+
+```bash
+# Tag your image
+docker tag hdb-resale-api manusapiens/hdb-resale-api:latest
+
+# Login to Docker Hub
+docker login
+
+# Push the image
+docker push manusapiens/hdb-resale-api:latest
+```
+
+### Pulling and Running from Docker Hub
+
+```bash
+# Pull the image
+docker pull manusapiens/hdb-resale-api:latest
+
+# Run the container
+docker run -p 3000:3000 manusapiens/hdb-resale-api:latest
+```
+
+### Using Docker Compose
+
+1. Make sure you have docker-compose installed
+2. Update the `docker-compose.yml` file with your Docker Hub username
+3. Run the application:
+
+```bash
+# Start the application
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop the application
+docker-compose down
+```
+
+The docker-compose configuration includes:
+- Automatic container restart
+- Health checks
+- Volume mounting for the CSV file
+- Network isolation
+- Production environment setting
+
 ## Data Source
 
 The data used in this application is from data.gov.sg:
