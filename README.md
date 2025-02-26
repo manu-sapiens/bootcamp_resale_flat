@@ -42,6 +42,35 @@ node server.js
 
 4. Open your browser and visit: `http://localhost:3000`
 
+## Desktop Application
+
+This application is also available as a desktop application built with Electron.
+
+### Development
+
+```bash
+# Install dependencies
+npm install
+
+# Run in development mode
+npm run dev
+```
+
+### Building the Desktop App
+
+```bash
+# Build the application
+npm run build
+```
+
+The built application will be available in the `dist` directory.
+
+### Features
+- Runs as a native desktop application
+- Includes built-in server
+- No need for external setup
+- Works offline
+
 ## Docker Support
 
 ### Building the Docker Image

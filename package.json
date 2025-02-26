@@ -1,15 +1,33 @@
 {
-  "name": "hdb-resale-api",
+  "name": "hdb-resale-explorer",
   "version": "1.0.0",
-  "description": "API for HDB Resale Flat Prices (1990-1999)",
-  "main": "server.js",
+  "description": "HDB Resale Price Explorer (1990-1999)",
+  "main": "main.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "electron .",
+    "server": "node server.js",
+    "dev": "concurrently \"npm run server\" \"electron .\"",
+    "build": "electron-builder"
   },
   "dependencies": {
-    "express": "^4.18.2",
+    "cors": "^2.8.5",
     "csv-parser": "^3.0.0",
-    "cors": "^2.8.5"
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "electron": "^29.4.6",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.manusapiens.hdb-resale",
+    "mac": {
+      "category": "public.app-category.finance"
+    },
+    "files": [
+      "**/*",
+      "ResaleFlatPricesBasedonApprovalDate19901999.csv"
+    ]
   },
   "author": "",
   "license": "ISC"
