@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HDB Resale Data API Tester</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        button {
+            padding: 10px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        input, select {
+            padding: 8px;
+            margin: 5px;
+        }
+        .stats-box {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .search-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .search-form div {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        label {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>HDB Resale Data API Tester</h1>
+
+    <div class="container">
+        <h2>Browse Data</h2>
+        <div>
+            <button onclick="fetchData(1)">Load Data</button>
+            <input type="number" id="limit" value="10" min="1" max="100">
+            <label for="limit">Records per page</label>
+        </div>
+        <div id="pagination">
+            <button onclick="previousPage()">Previous</button>
+            <span id="pageInfo">Page 1</span>
+            <button onclick="nextPage()">Next</button>
+        </div>
+        <div id="dataContainer"></div>
+    </div>
+
+    <div class="container">
+        <h2>Search by Town</h2>
+        <input type="text" id="town" placeholder="Enter town name">
+        <button onclick="searchByTown()">Search</button>
+        <div id="townResults"></div>
+    </div>
+
+    <div class="container">
+        <h2>Search by Flat Type</h2>
+        <input type="text" id="flatType" placeholder="Enter flat type">
+        <button onclick="searchByFlatType()">Search</button>
+        <div id="flatTypeResults"></div>
+    </div>
+
+    <div class="container">
+        <h2>Town Statistics</h2>
+        <button onclick="fetchTownStats()">Load Statistics</button>
+        <div id="statsResults"></div>
+    </div>
+
+    <div class="container">
+        <h2>Market Comparison Search</h2>
+        <div class="search-form">
+            <div>
+                <label for="searchTown">Town:</label>
+                <input type="text" id="searchTown" placeholder="e.g., ANG MO KIO">
+            </div>
+            <div>
+                <label for="searchFlatType">Flat Type:</label>
+                <input type="text" id="searchFlatType" placeholder="e.g., 4 ROOM">
+            </div>
+            <button onclick="searchCombined()">Search</button>
+        </div>
+        <div id="statsDisplay"></div>
+        <div id="searchResults"></div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        let totalRecords = 0;
+
+        async function fetchData(page) {
+            currentPage = page;
+            const limit = document.getElementById('limit').value;
+            const response = await fetch(`/api/resale?page=${page}&limit=${limit}`);
+            const data = await response.json();
+            totalRecords = data.total;
+            
+            displayData(data.data);
+            updatePagination();
+        }
+
+        function displayData(data) {
+            const container = document.getElementById('dataContainer');
+            if (data.length === 0) {
+                container.innerHTML = 'No data found';
+                return;
+            }
+
+            let table = '<table><tr>';
+            Object.keys(data[0]).forEach(key => {
+                table += `<th>${key}</th>`;
+            });
+            table += '</tr>';
+
+            data.forEach(record => {
+                table += '<tr>';
+                Object.values(record).forEach(value => {
+                    table += `<td>${value}</td>`;
+                });
+                table += '</tr>';
+            });
+            table += '</table>';
+            container.innerHTML = table;
+        }
+
+        function updatePagination() {
+            const limit = document.getElementById('limit').value;
+            const totalPages = Math.ceil(totalRecords / limit);
+            document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+        }
+
+        function previousPage() {
+            if (currentPage > 1) {
+                fetchData(currentPage - 1);
+            }
+        }
+
+        function nextPage() {
+            const limit = document.getElementById('limit').value;
+            if (currentPage * limit < totalRecords) {
+                fetchData(currentPage + 1);
+            }
+        }
+
+        async function searchByTown() {
+            const town = document.getElementById('town').value.trim();
+            if (!town) {
+                alert('Please enter a town name');
+                return;
+            }
+            const response = await fetch(`/api/resale/town/${encodeURIComponent(town)}`);
+            const data = await response.json();
+            displayResults('townResults', data);
+        }
+
+        async function searchByFlatType() {
+            const flatType = document.getElementById('flatType').value.trim();
+            if (!flatType) {
+                alert('Please enter a flat type');
+                return;
+            }
+            const response = await fetch(`/api/resale/flat-type/${encodeURIComponent(flatType)}`);
+            const data = await response.json();
+            displayResults('flatTypeResults', data);
+        }
+
+        async function fetchTownStats() {
+            const response = await fetch('/api/resale/stats/town');
+            const data = await response.json();
+            const container = document.getElementById('statsResults');
+            
+            let table = '<table><tr><th>Town</th><th>Average Price</th><th>Total Transactions</th></tr>';
+            Object.entries(data).forEach(([town, stats]) => {
+                table += `<tr>
+                    <td>${town}</td>
+                    <td>$${stats.average.toFixed(2)}</td>
+                    <td>${stats.count}</td>
+                </tr>`;
+            });
+            table += '</table>';
+            container.innerHTML = table;
+        }
+
+        function displayResults(containerId, data) {
+            const container = document.getElementById(containerId);
+            if (data.length === 0) {
+                container.innerHTML = 'No results found';
+                return;
+            }
+            displayData(data);
+        }
+
+        async function searchCombined() {
+            const town = document.getElementById('searchTown').value.trim();
+            const flatType = document.getElementById('searchFlatType').value.trim();
+
+            if (!town || !flatType) {
+                alert('Please enter both town and flat type');
+                return;
+            }
+
+            const response = await fetch(`/api/resale/search?town=${encodeURIComponent(town)}&flatType=${encodeURIComponent(flatType)}`);
+            const data = await response.json();
+
+            const statsContainer = document.getElementById('statsDisplay');
+            const resultsContainer = document.getElementById('searchResults');
+
+            if (!data.stats) {
+                statsContainer.innerHTML = '<p>No matching records found</p>';
+                resultsContainer.innerHTML = '';
+                return;
+            }
+
+            // Display statistics
+            statsContainer.innerHTML = `
+                <div class="stats-box">
+                    <h3>Market Statistics</h3>
+                    <p>Number of Transactions: ${data.stats.count}</p>
+                    <p>Average Price: $${data.stats.averagePrice.toLocaleString('en-US', {maximumFractionDigits: 2})}</p>
+                    <p>Minimum Price: $${data.stats.minPrice.toLocaleString('en-US')}</p>
+                    <p>Maximum Price: $${data.stats.maxPrice.toLocaleString('en-US')}</p>
+                    <p>Median Price: $${data.stats.medianPrice.toLocaleString('en-US')}</p>
+                </div>
+            `;
+
+            // Display results table
+            if (data.results.length > 0) {
+                let table = '<table><tr>';
+                Object.keys(data.results[0]).forEach(key => {
+                    table += `<th>${key}</th>`;
+                });
+                table += '</tr>';
+
+                data.results.forEach(record => {
+                    table += '<tr>';
+                    Object.values(record).forEach(value => {
+                        table += `<td>${value}</td>`;
+                    });
+                    table += '</tr>';
+                });
+                table += '</table>';
+                resultsContainer.innerHTML = table;
+            }
+        }
+    </script>
+</body>
+</html>
